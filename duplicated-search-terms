@@ -1,3 +1,8 @@
+// This was a script done with Javascript & SQL language. I used Phind Model & Google Documentation to make this since Javascript hates me x)
+// It fetches your Google ads account, returns the duplicated search terms across all ad groups and then prints it into the desired google sheet
+// by other words, it returns the google search queries that are appearing more than 2 times and probably wasting you tons of money
+// any possible error lmk
+
 function main() {
   // Fetch the Search Term Report
   var report = AdsApp.report(
