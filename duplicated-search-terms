@@ -1,0 +1,58 @@
+function main() {
+  // Fetch the Search Term Report
+  var report = AdsApp.report(
+    "SELECT Query, AdGroupName, Clicks, Impressions, Ctr, AverageCpc, Cost " +
+    "FROM SEARCH_QUERY_PERFORMANCE_REPORT " +
+    "WHERE Impressions > 0 " +
+    "DURING LAST_30_DAYS");
+
+  var rows = report.rows();
+  var data = [];
+  var searchTermToAdGroupsMap = {};  // To keep track of ad groups for each search term
+  
+  // Push data into an array and populate the searchTermToAdGroupsMap
+  while (rows.hasNext()) {
+    var row = rows.next();
+    var searchTerm = row['Query'];
+    var adGroupName = row['AdGroupName'];
+    
+    if (searchTermToAdGroupsMap[searchTerm]) {
+      searchTermToAdGroupsMap[searchTerm].push(adGroupName);
+    } else {
+      searchTermToAdGroupsMap[searchTerm] = [adGroupName];
+    }
+
+    data.push([searchTerm, adGroupName, row['Clicks'], row['Impressions'], row['Ctr'], row['AverageCpc'], row['Cost']]);
+  }
+  
+  var duplicateSearchTerms = getDuplicateSearchTerms(searchTermToAdGroupsMap);
+  
+  var duplicateRows = data.filter(row => duplicateSearchTerms.includes(row[0]));
+
+  // Sort the duplicateRows based on the search term
+  duplicateRows.sort((a, b) => a[0].localeCompare(b[0]));
+
+  // Export to Google Sheets
+  var spreadsheetUrl = 'COLOCAR URL DA SHEET';
+  var sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
+
+  // Set headers in the first row
+  sheet.getRange("A1:G1").setValues([['Query', 'AdGroupName', 'Clicks', 'Impressions', 'Ctr', 'AverageCpc', 'Cost']]);
+
+  // Start inserting data from row 2
+  sheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows);
+
+  Logger.log("Data Updated");
+}
+
+function getDuplicateSearchTerms(searchTermToAdGroupsMap) {
+  var duplicates = [];
+  
+  for (var searchTerm in searchTermToAdGroupsMap) {
+    if (searchTermToAdGroupsMap[searchTerm].length > 1) {
+      duplicates.push(searchTerm);
+    }
+  }
+
+  return duplicates;
+}
